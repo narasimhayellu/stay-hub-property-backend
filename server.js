@@ -41,8 +41,28 @@ const corsOptions = {
 app.use(cors(corsOptions)); 
 app.use(express.urlencoded({extended:true}));
 
-// Serve static files (uploaded images)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve static files (uploaded images) with CORS and proper headers
+app.use('/uploads', (req, res, next) => {
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'https://tolet-property.netlify.app',
+    'https://www.tolet-property.netlify.app'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, path) => {
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.set('Cache-Control', 'public, max-age=31536000');
+  }
+}));
 
 const userRoutes = require("./routes/user");
 const propertyRoutes = require("./routes/property");
