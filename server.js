@@ -16,9 +16,12 @@ app.use(express.json());
 // Define allowed origins in one place
 const allowedOrigins = [
   'http://localhost:5173', // Local development
-  'http://localhost:5176', // Alternative local port
+  'http://localhost:5174', // Alternative local port
+  'http://localhost:5176', // Another local port
   'https://stay-hub07.netlify.app', // Production frontend
   'https://www.stay-hub07.netlify.app', // Production with www
+  'https://to-let-property.netlify.app', // Alternative production frontend
+  'https://www.to-let-property.netlify.app' // Alternative production with www
 ];
 
 // CORS configuration
