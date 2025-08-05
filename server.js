@@ -13,16 +13,17 @@ console.log("DB_CONNECTION_URL:", url);
 const app = express();
 app.use(express.json());
 
+// Define allowed origins in one place
+const allowedOrigins = [
+  'http://localhost:5173', // Local development
+  'http://localhost:5176', // Alternative local port
+  'https://stay-hub07.netlify.app', // Production frontend
+  'https://www.stay-hub07.netlify.app', // Production with www
+];
+
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = [
-      'http://localhost:5173', // Local development
-      'http://localhost:5174', // Alternative local port
-      'https://tolet-property.netlify.app', // Production frontend
-      'https://www.tolet-property.netlify.app' // Production with www
-    ];
-    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
@@ -43,13 +44,6 @@ app.use(express.urlencoded({extended:true}));
 
 // Serve static files (uploaded images) with CORS and proper headers
 app.use('/uploads', (req, res, next) => {
-  const allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'https://tolet-property.netlify.app',
-    'https://www.tolet-property.netlify.app'
-  ];
-  
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
