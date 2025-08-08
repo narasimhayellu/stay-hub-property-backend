@@ -12,3 +12,4 @@ router.get("/protected", requireSignIn, (req, res) => {
   });
 
 module.exports = router;
+

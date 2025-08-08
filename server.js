@@ -63,9 +63,11 @@ app.use('/uploads', (req, res, next) => {
 
 const userRoutes = require("./routes/user");
 const propertyRoutes = require("./routes/property");
+const blogRoutes = require("./routes/blog");
 
 app.use("/users",userRoutes);
 app.use("/api/properties", propertyRoutes);
+app.use("/api/blogs", blogRoutes);
 
 const PORT = process.env.PORT || 3000;
 
