@@ -136,29 +136,44 @@ const createBlog = async (req, res) => {
 
 // Update blog
 const updateBlog = async (req, res) => {
-  try {
-    const blog = await Blog.findById(req.params.id);
-    
-    if (!blog) {
-      return res.status(404).json({ message: 'Blog not found' });
+  upload(req, res, async function (err) {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({ message: 'File upload error', error: err.message });
+    } else if (err) {
+      return res.status(400).json({ message: err.message });
     }
 
-    // Check if user is the author (user from JWT has userId field)
-    const userId = req.user._id || req.user.id || req.user.userId;
-    if (blog.author.toString() !== userId.toString()) {
-      return res.status(403).json({ message: 'Not authorized to update this blog' });
+    try {
+      const blog = await Blog.findById(req.params.id);
+      
+      if (!blog) {
+        return res.status(404).json({ message: 'Blog not found' });
+      }
+
+      // Check if user is the author (user from JWT has userId field)
+      const userId = req.user._id || req.user.id || req.user.userId;
+      if (blog.author.toString() !== userId.toString()) {
+        return res.status(403).json({ message: 'Not authorized to update this blog' });
+      }
+
+      // Update fields
+      if (req.body.title) blog.title = req.body.title;
+      if (req.body.content) blog.content = req.body.content;
+      if (req.body.tags) {
+        blog.tags = typeof req.body.tags === 'string' ? JSON.parse(req.body.tags || '[]') : (req.body.tags || []);
+      }
+      
+      // Update cover image if provided
+      if (req.file) {
+        blog.coverImage = `/uploads/blogs/${req.file.filename}`;
+      }
+
+      await blog.save();
+      res.status(200).json(blog);
+    } catch (error) {
+      res.status(500).json({ message: 'Error updating blog', error: error.message });
     }
-
-    const updates = req.body;
-    Object.keys(updates).forEach(key => {
-      blog[key] = updates[key];
-    });
-
-    await blog.save();
-    res.status(200).json(blog);
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating blog', error: error.message });
-  }
+  });
 };
 
 // Delete blog
