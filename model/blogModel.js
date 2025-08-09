@@ -12,7 +12,7 @@ const blogSchema = new mongoose.Schema({
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'user',  // Changed to lowercase to match the model registration
     required: true
   },
   coverImage: {
@@ -33,7 +33,7 @@ const blogSchema = new mongoose.Schema({
   },
   likedBy: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'user'  // Changed to lowercase to match the model registration
   }],
   status: {
     type: String,

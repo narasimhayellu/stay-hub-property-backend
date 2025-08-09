@@ -1,11 +1,19 @@
 const Blog = require('../model/blogModel');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+
+// Ensure upload directory exists
+const uploadDir = path.join(__dirname, '../uploads/blogs');
+if (!fs.existsSync(uploadDir)){
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log('Created uploads/blogs directory');
+}
 
 // Configure multer for image uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/blogs/');
+    cb(null, uploadDir);  // Use the absolute path
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
@@ -90,13 +98,22 @@ const createBlog = async (req, res) => {
 
     try {
       const { title, content, tags } = req.body;
-      const author = req.user._id; // From auth middleware
+      
+      // Handle different JWT token formats
+      const author = req.user._id || req.user.id || req.user.userId;
+      
+      console.log('User from auth middleware:', req.user); // Debug log
+      console.log('Creating blog with author:', author); // Debug log
+
+      if (!author) {
+        return res.status(400).json({ message: 'User authentication failed. Please login again.' });
+      }
 
       const blogData = {
         title,
         content,
         author,
-        tags: JSON.parse(tags || '[]')
+        tags: typeof tags === 'string' ? JSON.parse(tags || '[]') : (tags || [])
       };
 
       if (req.file) {
@@ -111,6 +128,7 @@ const createBlog = async (req, res) => {
 
       res.status(201).json(populatedBlog);
     } catch (error) {
+      console.error('Error creating blog:', error); // Better error logging
       res.status(500).json({ message: 'Error creating blog', error: error.message });
     }
   });
@@ -125,8 +143,9 @@ const updateBlog = async (req, res) => {
       return res.status(404).json({ message: 'Blog not found' });
     }
 
-    // Check if user is the author
-    if (blog.author.toString() !== req.user._id.toString()) {
+    // Check if user is the author (user from JWT has userId field)
+    const userId = req.user._id || req.user.id || req.user.userId;
+    if (blog.author.toString() !== userId.toString()) {
       return res.status(403).json({ message: 'Not authorized to update this blog' });
     }
 
@@ -151,8 +170,9 @@ const deleteBlog = async (req, res) => {
       return res.status(404).json({ message: 'Blog not found' });
     }
 
-    // Check if user is the author
-    if (blog.author.toString() !== req.user._id.toString()) {
+    // Check if user is the author (user from JWT has userId field)
+    const userId = req.user._id || req.user.id || req.user.userId;
+    if (blog.author.toString() !== userId.toString()) {
       return res.status(403).json({ message: 'Not authorized to delete this blog' });
     }
 
