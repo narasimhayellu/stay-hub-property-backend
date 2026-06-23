@@ -97,7 +97,7 @@ const propertySchema = new mongoose.Schema({
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'user',  // Changed to lowercase to match the model registration
+    ref: 'user',  
     required: true
   },
   createdAt: {

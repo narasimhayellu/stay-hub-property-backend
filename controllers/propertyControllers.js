@@ -3,7 +3,6 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadDir = 'uploads/properties';
@@ -20,7 +19,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 }, 
   fileFilter: function (req, file, cb) {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -34,7 +33,6 @@ const upload = multer({
   }
 });
 
-// Get all properties
 exports.getAllProperties = async (req, res) => {
   try {
     const properties = await Property.find().sort({ createdAt: -1 });
@@ -44,7 +42,6 @@ exports.getAllProperties = async (req, res) => {
   }
 };
 
-// Get single property
 exports.getProperty = async (req, res) => {
   try {
     const property = await Property.findById(req.params.id);
@@ -52,7 +49,6 @@ exports.getProperty = async (req, res) => {
       return res.status(404).json({ message: 'Property not found' });
     }
     
-    // Increment views
     property.views = (property.views || 0) + 1;
     await property.save();
     
@@ -62,7 +58,6 @@ exports.getProperty = async (req, res) => {
   }
 };
 
-// Get properties by user
 exports.getUserProperties = async (req, res) => {
   try {
     const properties = await Property.find({ userId: req.user.userId }).sort({ createdAt: -1 });
@@ -72,16 +67,13 @@ exports.getUserProperties = async (req, res) => {
   }
 };
 
-// Create new property
 exports.createProperty = async (req, res) => {
   try {
-    console.log('Auth user:', req.user); // Debug log
+    console.log('Auth user:', req.user); 
     const propertyData = { ...req.body };
     
-    // Add user ID from authenticated user
     propertyData.userId = req.user.userId || req.user._id || req.user.id;
     
-    // Convert string arrays back to arrays if needed
     if (typeof propertyData.appliances === 'string') {
       propertyData.appliances = propertyData.appliances.split(',').filter(item => item.trim());
     }
@@ -89,7 +81,6 @@ exports.createProperty = async (req, res) => {
       propertyData.amenities = propertyData.amenities.split(',').filter(item => item.trim());
     }
     
-    // Handle uploaded photos
     if (req.files && req.files.length > 0) {
       propertyData.photos = req.files.map(file => `/uploads/properties/${file.filename}`);
     }
@@ -110,10 +101,8 @@ exports.createProperty = async (req, res) => {
   }
 };
 
-// Update property
 exports.updateProperty = async (req, res) => {
   try {
-    // Check if property belongs to user
     const property = await Property.findById(req.params.id);
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
@@ -125,7 +114,6 @@ exports.updateProperty = async (req, res) => {
     
     const propertyData = { ...req.body };
     
-    // Convert string arrays back to arrays if needed
     if (typeof propertyData.appliances === 'string') {
       propertyData.appliances = propertyData.appliances.split(',').filter(item => item.trim());
     }
@@ -133,13 +121,11 @@ exports.updateProperty = async (req, res) => {
       propertyData.amenities = propertyData.amenities.split(',').filter(item => item.trim());
     }
     
-    // Handle existing photos
     let photos = [];
     if (req.body.existingPhotos) {
       photos = Array.isArray(req.body.existingPhotos) ? req.body.existingPhotos : [req.body.existingPhotos];
     }
     
-    // Handle new uploaded photos
     if (req.files && req.files.length > 0) {
       const newPhotos = req.files.map(file => `/uploads/properties/${file.filename}`);
       photos = [...photos, ...newPhotos];
@@ -159,7 +145,6 @@ exports.updateProperty = async (req, res) => {
   }
 };
 
-// Delete property
 exports.deleteProperty = async (req, res) => {
   try {
     const property = await Property.findById(req.params.id);
@@ -168,12 +153,10 @@ exports.deleteProperty = async (req, res) => {
       return res.status(404).json({ message: 'Property not found' });
     }
     
-    // Check if property belongs to user
     if (property.userId.toString() !== req.user.userId) {
       return res.status(403).json({ message: 'Not authorized to delete this property' });
     }
     
-    // Delete associated images
     if (property.photos && property.photos.length > 0) {
       property.photos.forEach(photo => {
         const filePath = path.join(__dirname, '..', photo);
@@ -190,5 +173,4 @@ exports.deleteProperty = async (req, res) => {
   }
 };
 
-// Export multer upload middleware
-exports.uploadPhotos = upload.array('photos', 10); // Allow up to 10 photos
+exports.uploadPhotos = upload.array('photos', 10); 

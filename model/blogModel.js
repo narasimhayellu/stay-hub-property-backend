@@ -12,7 +12,7 @@ const blogSchema = new mongoose.Schema({
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'user',  // Changed to lowercase to match the model registration
+    ref: 'user', 
     required: true
   },
   coverImage: {
@@ -33,7 +33,7 @@ const blogSchema = new mongoose.Schema({
   },
   likedBy: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'user'  // Changed to lowercase to match the model registration
+    ref: 'user' 
   }],
   status: {
     type: String,
@@ -50,13 +50,11 @@ const blogSchema = new mongoose.Schema({
   }
 });
 
-// Update timestamp on save
 blogSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-// Virtual for trending score (based on views and likes)
 blogSchema.virtual('trendingScore').get(function() {
   return (this.views * 0.3) + (this.likes * 0.7);
 });

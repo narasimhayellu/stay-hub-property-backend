@@ -3,17 +3,15 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure upload directory exists
 const uploadDir = path.join(__dirname, '../uploads/blogs');
 if (!fs.existsSync(uploadDir)){
     fs.mkdirSync(uploadDir, { recursive: true });
     console.log('Created uploads/blogs directory');
 }
 
-// Configure multer for image uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, uploadDir);  // Use the absolute path
+    cb(null, uploadDir); 
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
@@ -22,7 +20,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 }, 
   fileFilter: function (req, file, cb) {
     const filetypes = /jpeg|jpg|png|gif/;
     const mimetype = filetypes.test(file.mimetype);
@@ -35,7 +33,6 @@ const upload = multer({
   }
 }).single('coverImage');
 
-// Get all blogs with pagination and sorting
 const getAllBlogs = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -47,7 +44,6 @@ const getAllBlogs = async (req, res) => {
     if (sortBy === 'latest') {
       sortQuery = { createdAt: -1 };
     } else if (sortBy === 'trending') {
-      // Sort by trending score (combination of views and likes)
       sortQuery = { views: -1, likes: -1 };
     }
 
@@ -71,7 +67,6 @@ const getAllBlogs = async (req, res) => {
   }
 };
 
-// Get single blog by ID
 const getBlogById = async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id)
@@ -87,7 +82,6 @@ const getBlogById = async (req, res) => {
   }
 };
 
-// Create new blog
 const createBlog = async (req, res) => {
   upload(req, res, async function (err) {
     if (err instanceof multer.MulterError) {
@@ -99,11 +93,10 @@ const createBlog = async (req, res) => {
     try {
       const { title, content, tags } = req.body;
       
-      // Handle different JWT token formats
       const author = req.user._id || req.user.id || req.user.userId;
       
-      console.log('User from auth middleware:', req.user); // Debug log
-      console.log('Creating blog with author:', author); // Debug log
+      console.log('User from auth middleware:', req.user); 
+      console.log('Creating blog with author:', author); 
 
       if (!author) {
         return res.status(400).json({ message: 'User authentication failed. Please login again.' });
@@ -128,13 +121,12 @@ const createBlog = async (req, res) => {
 
       res.status(201).json(populatedBlog);
     } catch (error) {
-      console.error('Error creating blog:', error); // Better error logging
+      console.error('Error creating blog:', error); 
       res.status(500).json({ message: 'Error creating blog', error: error.message });
     }
   });
 };
 
-// Update blog
 const updateBlog = async (req, res) => {
   upload(req, res, async function (err) {
     if (err instanceof multer.MulterError) {
@@ -150,20 +142,17 @@ const updateBlog = async (req, res) => {
         return res.status(404).json({ message: 'Blog not found' });
       }
 
-      // Check if user is the author (user from JWT has userId field)
       const userId = req.user._id || req.user.id || req.user.userId;
       if (blog.author.toString() !== userId.toString()) {
         return res.status(403).json({ message: 'Not authorized to update this blog' });
       }
 
-      // Update fields
       if (req.body.title) blog.title = req.body.title;
       if (req.body.content) blog.content = req.body.content;
       if (req.body.tags) {
         blog.tags = typeof req.body.tags === 'string' ? JSON.parse(req.body.tags || '[]') : (req.body.tags || []);
       }
       
-      // Update cover image if provided
       if (req.file) {
         blog.coverImage = `/uploads/blogs/${req.file.filename}`;
       }
@@ -176,7 +165,6 @@ const updateBlog = async (req, res) => {
   });
 };
 
-// Delete blog
 const deleteBlog = async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
@@ -185,7 +173,6 @@ const deleteBlog = async (req, res) => {
       return res.status(404).json({ message: 'Blog not found' });
     }
 
-    // Check if user is the author (user from JWT has userId field)
     const userId = req.user._id || req.user.id || req.user.userId;
     if (blog.author.toString() !== userId.toString()) {
       return res.status(403).json({ message: 'Not authorized to delete this blog' });
@@ -198,7 +185,6 @@ const deleteBlog = async (req, res) => {
   }
 };
 
-// Increment view count
 const incrementView = async (req, res) => {
   try {
     const blog = await Blog.findByIdAndUpdate(
@@ -217,11 +203,10 @@ const incrementView = async (req, res) => {
   }
 };
 
-// Toggle like
 const toggleLike = async (req, res) => {
   try {
     const blogId = req.params.id;
-    const userId = req.user?._id; // Optional chaining in case user is not authenticated
+    const userId = req.user?._id; 
 
     const blog = await Blog.findById(blogId);
     
@@ -234,17 +219,14 @@ const toggleLike = async (req, res) => {
       const likeIndex = blog.likedBy.indexOf(userId);
       
       if (likeIndex > -1) {
-        // User already liked, remove like
         blog.likedBy.splice(likeIndex, 1);
         blog.likes = Math.max(0, blog.likes - 1);
       } else {
-        // User hasn't liked, add like
         blog.likedBy.push(userId);
         blog.likes += 1;
         liked = true;
       }
     } else {
-      // Anonymous like
       blog.likes += 1;
       liked = true;
     }

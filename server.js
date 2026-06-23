@@ -15,16 +15,17 @@ app.use(express.json());
 app.use(cors()); 
 app.use(express.urlencoded({extended:true}));
 
-// Serve static files for uploaded images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const userRoutes = require("./routes/user");
 const propertyRoutes = require("./routes/property");
 const blogRoutes = require("./routes/blog");
+const contactRoutes = require("./routes/contact.js")
 
 app.use("/users",userRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/blogs", blogRoutes);
+app.use("/api/contact", contactRoutes);
 
 const PORT = process.env.PORT || 3000;
 
